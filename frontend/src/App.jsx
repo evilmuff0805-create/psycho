@@ -52,7 +52,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>내가 만난 사이코패스</h1>
+        <div className="app-title">
+          <img src="/로고.jpg" alt="로고" className="app-logo" />
+          <h1>내가 만난 사이코패스</h1>
+        </div>
         <button
           className="dark-toggle"
           onClick={() => setDarkMode((d) => !d)}
