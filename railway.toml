@@ -1,0 +1,19 @@
+[build]
+  builder = "NIXPACKS"
+
+[[services]]
+  name = "backend"
+  source = "backend"
+
+  [services.deploy]
+    startCommand = "node server.js"
+    healthcheckPath = "/api/health"
+    healthcheckTimeout = 30
+
+[[services]]
+  name = "frontend"
+  source = "frontend"
+
+  [services.build]
+    buildCommand = "npm install && npm run build"
+    publishDirectory = "dist"
