@@ -4,7 +4,7 @@ const { pool } = require('../database');
 const router = express.Router();
 
 const VALID_PRIORITIES = ['high', 'medium', 'low'];
-const VALID_TEAMS = ['combined', 'master'];
+const VALID_TEAMS = ['combined', 'master', 'writer'];
 
 function toTodo(row) {
   return {

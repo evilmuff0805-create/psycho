@@ -3,6 +3,7 @@ import TodoItem from './TodoItem';
 import AddTodoForm from './AddTodoForm';
 
 const TEAMS = [
+  { key: 'writer', label: '작가팀' },
   { key: 'combined', label: '합본편집팀' },
   { key: 'master', label: '마스터팀' },
 ];
