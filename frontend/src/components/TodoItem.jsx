@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 const PRIORITY_LABELS = { high: '높음', medium: '중간', low: '낮음' };
-const TEAM_LABELS = { combined: '합본편집팀', master: '마스터팀' };
+const TEAM_LABELS = { writer: '작가팀', combined: '합본편집팀', master: '마스터팀' };
 
 export default function TodoItem({ todo, onToggle, onDelete, onEdit }) {
   const [editing, setEditing] = useState(false);
@@ -82,7 +82,7 @@ export default function TodoItem({ todo, onToggle, onDelete, onEdit }) {
         aria-label={`${todo.completed ? '완료 취소' : '완료'}: ${todo.title}`}
       />
       <div className="todo-body">
-        <span className={`todo-title${priority === 'high' ? ' highlight-high' : ''}`}>
+        <span className={`todo-title${priority === 'high' ? ` highlight-high-${todo.team || 'combined'}` : ''}`}>
           {todo.title}
         </span>
         <div className="todo-meta">
