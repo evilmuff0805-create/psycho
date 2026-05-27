@@ -209,6 +209,37 @@ body {
 .todo-item:hover { background: var(--primary-light); }
 .todo-item:hover .edit-btn,
 .todo-item:hover .delete-btn { opacity: 1; }
+.todo-item:hover .drag-handle { opacity: 1; }
+
+/* 드래그 핸들 */
+.drag-handle {
+  background: none;
+  border: none;
+  cursor: grab;
+  color: var(--text-muted);
+  font-size: 1rem;
+  padding: 0 2px;
+  opacity: 0;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 1px;
+  line-height: 1;
+  touch-action: none;
+}
+.drag-handle:active { cursor: grabbing; }
+@media (max-width: 480px) { .drag-handle { opacity: 0.35; } }
+
+/* 드래그 중인 아이템 */
+.todo-item.dragging {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* 드롭 가능 영역 하이라이트 */
+.day-column.drag-over {
+  background: var(--primary-light) !important;
+  border: 2px dashed var(--primary) !important;
+}
 
 .todo-item input[type="checkbox"] {
   width: 15px;

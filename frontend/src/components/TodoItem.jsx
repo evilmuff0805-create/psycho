@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const PRIORITY_LABELS = { high: '높음', medium: '중간', low: '낮음' };
 const TEAM_LABELS = { writer: '작가팀', combined: '합본편집팀', master: '마스터팀' };
 
-export default function TodoItem({ todo, onToggle, onDelete, onEdit }) {
+export default function TodoItem({
+  todo, onToggle, onDelete, onEdit,
+  isDragging, onDragStart, onDragEnd, onDragOver, onDrop,
+}) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editTime, setEditTime] = useState(todo.time || '');
@@ -11,6 +14,50 @@ export default function TodoItem({ todo, onToggle, onDelete, onEdit }) {
   const [editTeam, setEditTeam] = useState(todo.team || 'combined');
 
   const priority = todo.priority || 'medium';
+  const handleRef = useRef(null);
+
+  // non-passive touch events on drag handle for mobile
+  useEffect(() => {
+    const handle = handleRef.current;
+    if (!handle) return;
+    let touchId = null;
+
+    function onTouchStart(e) {
+      e.preventDefault();
+      touchId = e.touches[0].identifier;
+      onDragStart(todo);
+    }
+
+    function onTouchMove(e) {
+      e.preventDefault();
+      const touch = Array.from(e.touches).find((t) => t.identifier === touchId);
+      if (!touch) return;
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const dayCol = el?.closest('[data-date]');
+      onDragOver(dayCol?.dataset.date ?? null);
+    }
+
+    function onTouchEnd(e) {
+      const touch = Array.from(e.changedTouches).find((t) => t.identifier === touchId);
+      if (touch) {
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const dayCol = el?.closest('[data-date]');
+        dayCol ? onDrop(dayCol.dataset.date) : onDragEnd();
+      } else {
+        onDragEnd();
+      }
+      touchId = null;
+    }
+
+    handle.addEventListener('touchstart', onTouchStart, { passive: false });
+    handle.addEventListener('touchmove', onTouchMove, { passive: false });
+    handle.addEventListener('touchend', onTouchEnd);
+    return () => {
+      handle.removeEventListener('touchstart', onTouchStart);
+      handle.removeEventListener('touchmove', onTouchMove);
+      handle.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [todo, onDragStart, onDragEnd, onDragOver, onDrop]);
 
   function handleEditSubmit(e) {
     e.preventDefault();
@@ -74,7 +121,13 @@ export default function TodoItem({ todo, onToggle, onDelete, onEdit }) {
   }
 
   return (
-    <li className={`todo-item${todo.completed ? ' completed' : ''}`}>
+    <li
+      className={`todo-item${todo.completed ? ' completed' : ''}${isDragging ? ' dragging' : ''}`}
+      draggable={true}
+      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(todo); }}
+      onDragEnd={onDragEnd}
+    >
+      <button ref={handleRef} className="drag-handle" aria-label="드래그하여 날짜 이동">⠿</button>
       <input
         type="checkbox"
         checked={todo.completed}

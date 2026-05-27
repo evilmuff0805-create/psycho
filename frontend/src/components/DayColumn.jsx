@@ -8,15 +8,33 @@ const TEAMS = [
   { key: 'master', label: '마스터팀' },
 ];
 
-export default function DayColumn({ date, todos, onAdd, onToggle, onDelete, onEdit }) {
+function toIsoDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export default function DayColumn({
+  date, todos, onAdd, onToggle, onDelete, onEdit,
+  draggingId, isDragOver,
+  onTodoDragStart, onDragOver, onDrop, onDragEnd,
+}) {
   const today = new Date();
   const isToday =
     date.getFullYear() === today.getFullYear() &&
     date.getMonth() === today.getMonth() &&
     date.getDate() === today.getDate();
 
+  const dateStr = toIsoDate(date);
+
   return (
-    <div className={`day-column${isToday ? ' today' : ''}`}>
+    <div
+      className={`day-column${isToday ? ' today' : ''}${isDragOver ? ' drag-over' : ''}`}
+      data-date={dateStr}
+      onDragOver={(e) => { e.preventDefault(); onDragOver(dateStr); }}
+      onDrop={(e) => { e.preventDefault(); onDrop(dateStr); }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) onDragOver(null);
+      }}
+    >
       <DayHeader date={date} />
       {TEAMS.map((team, idx) => (
         <div key={team.key} className="team-section">
@@ -32,6 +50,11 @@ export default function DayColumn({ date, todos, onAdd, onToggle, onDelete, onEd
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onEdit={onEdit}
+                  isDragging={draggingId === todo.id}
+                  onDragStart={onTodoDragStart}
+                  onDragEnd={onDragEnd}
+                  onDragOver={onDragOver}
+                  onDrop={onDrop}
                 />
               ))}
           </ul>

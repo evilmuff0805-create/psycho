@@ -1,11 +1,32 @@
+import { useState } from 'react';
 import DayColumn from './DayColumn';
 
 export default function WeekView({ weekMonday, todos, onAdd, onToggle, onDelete, onEdit }) {
+  const [dragging, setDragging] = useState(null); // { id, originalDate }
+  const [dragOverDate, setDragOverDate] = useState(null);
+
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekMonday);
     d.setDate(d.getDate() + i);
     return d;
   });
+
+  function handleDragStart(todo) {
+    setDragging({ id: todo.id, originalDate: todo.todoDate });
+  }
+
+  function handleDragEnd() {
+    setDragging(null);
+    setDragOverDate(null);
+  }
+
+  function handleDrop(targetDate) {
+    if (dragging && targetDate !== dragging.originalDate) {
+      onEdit(dragging.id, { todoDate: targetDate });
+    }
+    setDragging(null);
+    setDragOverDate(null);
+  }
 
   return (
     <div className="week-view">
@@ -21,6 +42,12 @@ export default function WeekView({ weekMonday, todos, onAdd, onToggle, onDelete,
             onToggle={onToggle}
             onDelete={onDelete}
             onEdit={onEdit}
+            draggingId={dragging?.id ?? null}
+            isDragOver={dragOverDate === dateStr && dragging !== null}
+            onTodoDragStart={handleDragStart}
+            onDragOver={setDragOverDate}
+            onDrop={handleDrop}
+            onDragEnd={handleDragEnd}
           />
         );
       })}
