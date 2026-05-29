@@ -1,10 +1,13 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import DayColumn from './DayColumn';
 
 export default function WeekView({ weekMonday, todos, onAdd, onToggle, onDelete, onEdit }) {
-  const draggingRef = useRef(null);
-  const [draggingId, setDraggingId] = useState(null);
-  const [dragOverDate, setDragOverDate] = useState(null);
+  const [activeId, setActiveId] = useState(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekMonday);
@@ -12,51 +15,45 @@ export default function WeekView({ weekMonday, todos, onAdd, onToggle, onDelete,
     return d;
   });
 
-  function handleDragStart(todo) {
-    draggingRef.current = { id: todo.id, originalDate: todo.todoDate };
-    setDraggingId(todo.id);
+  const activeTodo = todos.find((t) => t.id === activeId);
+
+  function handleDragStart({ active }) {
+    setActiveId(active.id);
   }
 
-  function handleDragEnd() {
-    draggingRef.current = null;
-    setDraggingId(null);
-    setDragOverDate(null);
-  }
-
-  function handleDrop(targetDate) {
-    const drag = draggingRef.current;
-    if (drag && targetDate !== drag.originalDate) {
-      onEdit(drag.id, { todoDate: targetDate });
-    }
-    draggingRef.current = null;
-    setDraggingId(null);
-    setDragOverDate(null);
+  function handleDragEnd({ active, over }) {
+    setActiveId(null);
+    if (!over) return;
+    const todo = todos.find((t) => t.id === active.id);
+    if (!todo || todo.todoDate === over.id) return;
+    onEdit(active.id, { todoDate: over.id });
   }
 
   return (
-    <div className="week-view">
-      {days.map((date) => {
-        const dateStr = toIsoDate(date);
-        const dayTodos = todos.filter((t) => t.todoDate === dateStr);
-        return (
-          <DayColumn
-            key={dateStr}
-            date={date}
-            todos={dayTodos}
-            onAdd={(title, time, priority, team) => onAdd(title, time, dateStr, priority, team)}
-            onToggle={onToggle}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            draggingId={draggingId}
-            isDragOver={dragOverDate === dateStr && draggingId !== null}
-            onTodoDragStart={handleDragStart}
-            onDragOver={setDragOverDate}
-            onDrop={handleDrop}
-            onDragEnd={handleDragEnd}
-          />
-        );
-      })}
-    </div>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="week-view">
+        {days.map((date) => {
+          const dateStr = toIsoDate(date);
+          const dayTodos = todos.filter((t) => t.todoDate === dateStr);
+          return (
+            <DayColumn
+              key={dateStr}
+              date={date}
+              todos={dayTodos}
+              onAdd={(title, time, priority, team) => onAdd(title, time, dateStr, priority, team)}
+              onToggle={onToggle}
+              onDelete={onDelete}
+              onEdit={onEdit}
+            />
+          );
+        })}
+      </div>
+      <DragOverlay dropAnimation={null}>
+        {activeTodo ? (
+          <div className="drag-overlay-card">{activeTodo.title}</div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }
 

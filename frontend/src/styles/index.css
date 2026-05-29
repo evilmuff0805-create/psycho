@@ -214,8 +214,6 @@ body {
 
 /* 드래그 핸들 */
 .drag-handle {
-  background: none;
-  border: none;
   cursor: grab;
   color: var(--text-muted);
   font-size: 1rem;
@@ -228,18 +226,33 @@ body {
   touch-action: none;
 }
 .drag-handle:active { cursor: grabbing; }
-@media (max-width: 480px) { .drag-handle { opacity: 0.35; } }
+@media (hover: none) { .drag-handle { opacity: 0.5; } }
 
 /* 드래그 중인 아이템 */
 .todo-item.dragging {
-  opacity: 0.4;
-  pointer-events: none;
+  opacity: 0.35;
+  background: var(--primary-light);
 }
 
 /* 드롭 가능 영역 하이라이트 */
-.day-column.drag-over {
+.day-column.drop-over {
   background: var(--primary-light) !important;
   border: 2px dashed var(--primary) !important;
+}
+
+/* 드래그 오버레이 카드 */
+.drag-overlay-card {
+  background: var(--card-bg);
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.82rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  cursor: grabbing;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .todo-item input[type="checkbox"] {

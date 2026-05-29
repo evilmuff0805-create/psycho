@@ -1,3 +1,4 @@
+import { useDroppable } from '@dnd-kit/core';
 import DayHeader from './DayHeader';
 import TodoItem from './TodoItem';
 import AddTodoForm from './AddTodoForm';
@@ -12,11 +13,7 @@ function toIsoDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-export default function DayColumn({
-  date, todos, onAdd, onToggle, onDelete, onEdit,
-  draggingId, isDragOver,
-  onTodoDragStart, onDragOver, onDrop, onDragEnd,
-}) {
+export default function DayColumn({ date, todos, onAdd, onToggle, onDelete, onEdit }) {
   const today = new Date();
   const isToday =
     date.getFullYear() === today.getFullYear() &&
@@ -24,16 +21,12 @@ export default function DayColumn({
     date.getDate() === today.getDate();
 
   const dateStr = toIsoDate(date);
+  const { setNodeRef, isOver } = useDroppable({ id: dateStr });
 
   return (
     <div
-      className={`day-column${isToday ? ' today' : ''}${isDragOver ? ' drag-over' : ''}`}
-      data-date={dateStr}
-      onDragOver={(e) => { e.preventDefault(); onDragOver(dateStr); }}
-      onDrop={(e) => { e.preventDefault(); onDrop(dateStr); }}
-      onDragLeave={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget)) onDragOver(null);
-      }}
+      ref={setNodeRef}
+      className={`day-column${isToday ? ' today' : ''}${isOver ? ' drop-over' : ''}`}
     >
       <DayHeader date={date} />
       {TEAMS.map((team, idx) => (
@@ -50,11 +43,6 @@ export default function DayColumn({
                   onToggle={onToggle}
                   onDelete={onDelete}
                   onEdit={onEdit}
-                  isDragging={draggingId === todo.id}
-                  onDragStart={onTodoDragStart}
-                  onDragEnd={onDragEnd}
-                  onDragOver={onDragOver}
-                  onDrop={onDrop}
                 />
               ))}
           </ul>

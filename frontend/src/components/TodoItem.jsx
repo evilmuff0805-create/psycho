@@ -1,12 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 const PRIORITY_LABELS = { high: '높음', medium: '중간', low: '낮음' };
 const TEAM_LABELS = { writer: '작가팀', combined: '합본편집팀', master: '마스터팀' };
 
-export default function TodoItem({
-  todo, onToggle, onDelete, onEdit,
-  isDragging, onDragStart, onDragEnd, onDragOver, onDrop,
-}) {
+export default function TodoItem({ todo, onToggle, onDelete, onEdit }) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editTime, setEditTime] = useState(todo.time || '');
@@ -14,56 +13,13 @@ export default function TodoItem({
   const [editTeam, setEditTeam] = useState(todo.team || 'combined');
 
   const priority = todo.priority || 'medium';
-  const handleRef = useRef(null);
 
-  // 렌더마다 최신 콜백+todo를 ref에 저장 (listener 재등록 없이 최신값 유지)
-  const dragCallbacksRef = useRef(null);
-  dragCallbacksRef.current = { onDragStart, onDragEnd, onDragOver, onDrop, todo };
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: todo.id,
+    disabled: editing,
+  });
 
-  // non-passive touch events — 마운트 시 한 번만 등록 (의존 배열 [])
-  useEffect(() => {
-    const handle = handleRef.current;
-    if (!handle) return;
-    let touchId = null;
-
-    function onTouchStart(e) {
-      e.preventDefault();
-      touchId = e.touches[0].identifier;
-      dragCallbacksRef.current.onDragStart(dragCallbacksRef.current.todo);
-    }
-
-    function onTouchMove(e) {
-      e.preventDefault();
-      const touch = Array.from(e.touches).find((t) => t.identifier === touchId);
-      if (!touch) return;
-      const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      const dayCol = el?.closest('[data-date]');
-      dragCallbacksRef.current.onDragOver(dayCol?.dataset.date ?? null);
-    }
-
-    function onTouchEnd(e) {
-      const touch = Array.from(e.changedTouches).find((t) => t.identifier === touchId);
-      if (touch) {
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        const dayCol = el?.closest('[data-date]');
-        dayCol
-          ? dragCallbacksRef.current.onDrop(dayCol.dataset.date)
-          : dragCallbacksRef.current.onDragEnd();
-      } else {
-        dragCallbacksRef.current.onDragEnd();
-      }
-      touchId = null;
-    }
-
-    handle.addEventListener('touchstart', onTouchStart, { passive: false });
-    handle.addEventListener('touchmove', onTouchMove, { passive: false });
-    handle.addEventListener('touchend', onTouchEnd);
-    return () => {
-      handle.removeEventListener('touchstart', onTouchStart);
-      handle.removeEventListener('touchmove', onTouchMove);
-      handle.removeEventListener('touchend', onTouchEnd);
-    };
-  }, []); // 빈 배열 — 마운트 시 한 번만 등록
+  const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
 
   function handleEditSubmit(e) {
     e.preventDefault();
@@ -128,16 +84,11 @@ export default function TodoItem({
 
   return (
     <li
+      ref={setNodeRef}
+      style={style}
       className={`todo-item${todo.completed ? ' completed' : ''}${isDragging ? ' dragging' : ''}`}
-      draggable={!editing}
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', String(todo.id));
-        onDragStart(todo);
-      }}
-      onDragEnd={onDragEnd}
     >
-      <span ref={handleRef} className="drag-handle" aria-hidden="true">⠿</span>
+      <span className="drag-handle" {...listeners} {...attributes}>⠿</span>
       <input
         type="checkbox"
         checked={todo.completed}
