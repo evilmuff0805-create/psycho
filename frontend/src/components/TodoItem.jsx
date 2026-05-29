@@ -127,19 +127,17 @@ export default function TodoItem({
   }
 
   return (
-    <li className={`todo-item${todo.completed ? ' completed' : ''}${isDragging ? ' dragging' : ''}`}>
-      <button
-        ref={handleRef}
-        className="drag-handle"
-        draggable={true}
-        onDragStart={(e) => {
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', String(todo.id));
-          onDragStart(todo);
-        }}
-        onDragEnd={onDragEnd}
-        aria-label="드래그하여 날짜 이동"
-      >⠿</button>
+    <li
+      className={`todo-item${todo.completed ? ' completed' : ''}${isDragging ? ' dragging' : ''}`}
+      draggable={!editing}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(todo.id));
+        onDragStart(todo);
+      }}
+      onDragEnd={onDragEnd}
+    >
+      <span ref={handleRef} className="drag-handle" aria-hidden="true">⠿</span>
       <input
         type="checkbox"
         checked={todo.completed}
