@@ -16,7 +16,11 @@ export default function TodoItem({
   const priority = todo.priority || 'medium';
   const handleRef = useRef(null);
 
-  // non-passive touch events on drag handle for mobile
+  // 렌더마다 최신 콜백+todo를 ref에 저장 (listener 재등록 없이 최신값 유지)
+  const dragCallbacksRef = useRef(null);
+  dragCallbacksRef.current = { onDragStart, onDragEnd, onDragOver, onDrop, todo };
+
+  // non-passive touch events — 마운트 시 한 번만 등록 (의존 배열 [])
   useEffect(() => {
     const handle = handleRef.current;
     if (!handle) return;
@@ -25,7 +29,7 @@ export default function TodoItem({
     function onTouchStart(e) {
       e.preventDefault();
       touchId = e.touches[0].identifier;
-      onDragStart(todo);
+      dragCallbacksRef.current.onDragStart(dragCallbacksRef.current.todo);
     }
 
     function onTouchMove(e) {
@@ -34,7 +38,7 @@ export default function TodoItem({
       if (!touch) return;
       const el = document.elementFromPoint(touch.clientX, touch.clientY);
       const dayCol = el?.closest('[data-date]');
-      onDragOver(dayCol?.dataset.date ?? null);
+      dragCallbacksRef.current.onDragOver(dayCol?.dataset.date ?? null);
     }
 
     function onTouchEnd(e) {
@@ -42,9 +46,11 @@ export default function TodoItem({
       if (touch) {
         const el = document.elementFromPoint(touch.clientX, touch.clientY);
         const dayCol = el?.closest('[data-date]');
-        dayCol ? onDrop(dayCol.dataset.date) : onDragEnd();
+        dayCol
+          ? dragCallbacksRef.current.onDrop(dayCol.dataset.date)
+          : dragCallbacksRef.current.onDragEnd();
       } else {
-        onDragEnd();
+        dragCallbacksRef.current.onDragEnd();
       }
       touchId = null;
     }
@@ -57,7 +63,7 @@ export default function TodoItem({
       handle.removeEventListener('touchmove', onTouchMove);
       handle.removeEventListener('touchend', onTouchEnd);
     };
-  }, [todo, onDragStart, onDragEnd, onDragOver, onDrop]);
+  }, []); // 빈 배열 — 마운트 시 한 번만 등록
 
   function handleEditSubmit(e) {
     e.preventDefault();
@@ -121,13 +127,19 @@ export default function TodoItem({
   }
 
   return (
-    <li
-      className={`todo-item${todo.completed ? ' completed' : ''}${isDragging ? ' dragging' : ''}`}
-      draggable={true}
-      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(todo); }}
-      onDragEnd={onDragEnd}
-    >
-      <button ref={handleRef} className="drag-handle" aria-label="드래그하여 날짜 이동">⠿</button>
+    <li className={`todo-item${todo.completed ? ' completed' : ''}${isDragging ? ' dragging' : ''}`}>
+      <button
+        ref={handleRef}
+        className="drag-handle"
+        draggable={true}
+        onDragStart={(e) => {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', String(todo.id));
+          onDragStart(todo);
+        }}
+        onDragEnd={onDragEnd}
+        aria-label="드래그하여 날짜 이동"
+      >⠿</button>
       <input
         type="checkbox"
         checked={todo.completed}

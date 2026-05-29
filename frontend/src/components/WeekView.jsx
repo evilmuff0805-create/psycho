@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import DayColumn from './DayColumn';
 
 export default function WeekView({ weekMonday, todos, onAdd, onToggle, onDelete, onEdit }) {
-  const [dragging, setDragging] = useState(null); // { id, originalDate }
+  const draggingRef = useRef(null);
+  const [draggingId, setDraggingId] = useState(null);
   const [dragOverDate, setDragOverDate] = useState(null);
 
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -12,19 +13,23 @@ export default function WeekView({ weekMonday, todos, onAdd, onToggle, onDelete,
   });
 
   function handleDragStart(todo) {
-    setDragging({ id: todo.id, originalDate: todo.todoDate });
+    draggingRef.current = { id: todo.id, originalDate: todo.todoDate };
+    setDraggingId(todo.id);
   }
 
   function handleDragEnd() {
-    setDragging(null);
+    draggingRef.current = null;
+    setDraggingId(null);
     setDragOverDate(null);
   }
 
   function handleDrop(targetDate) {
-    if (dragging && targetDate !== dragging.originalDate) {
-      onEdit(dragging.id, { todoDate: targetDate });
+    const drag = draggingRef.current;
+    if (drag && targetDate !== drag.originalDate) {
+      onEdit(drag.id, { todoDate: targetDate });
     }
-    setDragging(null);
+    draggingRef.current = null;
+    setDraggingId(null);
     setDragOverDate(null);
   }
 
@@ -42,8 +47,8 @@ export default function WeekView({ weekMonday, todos, onAdd, onToggle, onDelete,
             onToggle={onToggle}
             onDelete={onDelete}
             onEdit={onEdit}
-            draggingId={dragging?.id ?? null}
-            isDragOver={dragOverDate === dateStr && dragging !== null}
+            draggingId={draggingId}
+            isDragOver={dragOverDate === dateStr && draggingId !== null}
             onTodoDragStart={handleDragStart}
             onDragOver={setDragOverDate}
             onDrop={handleDrop}
